@@ -9,10 +9,44 @@ is the **same rectangle**, viewed in two different ways:
 - A vibrating field has **nodal lines**, the points where an eigenfunction is zero.
   The same rectangle and its dimensions determine which standing waves exist.
 
-The connection is real, but **rays are not nodal curves**. Classical trajectories
-and wave modes are distinct mathematical objects whose spectra and orbit lengths
-can be compared. Translation-surface moduli and Mirzakhani's work enter on the
-billiard side, not as a formula for sand patterns.
+## Wavefronts and billiard rays: the direct bridge
+
+A propagating wavefront is a level curve of its phase `S(x,y,t) = constant`.
+In an isotropic homogeneous medium, the ray direction is parallel to
+`grad(S)`, hence **perpendicular to the wavefront**. At a specular wall with
+unit normal `N`, the wavevector (and ray direction) reflects as
+
+```
+k_out = k_in - 2 * dot(k_in, N) * N
+```
+
+This follows from conserving the tangential phase gradient at a stationary
+flat wall. Billiard trajectories are thus the geometrical-optics rays of
+propagating waves, not an unrelated analogy. Unfolding the rectangle straightens
+the reflected rays and the corresponding local phase fronts.
+
+Even the rectangle's standing mode below admits an **exact four-plane-wave
+decomposition**. With `kx = m*pi/a`, `ky = n*pi/b`, the spatial mode is
+
+```
+sin(kx*x) sin(ky*y) = [cos(kx*x - ky*y) - cos(kx*x + ky*y)] / 2
+```
+
+Multiplying by `cos(omega*t)` resolves it into four traveling plane waves,
+whose wavevectors are the sign combinations `(+/-kx, +/-ky)`. Their ray
+directions are precisely the ones obtained by specular reflection in the
+rectangle. The nodal figure comes from **interference among these waves**:
+a stationary nodal line is not itself one traveling wavefront.
+
+The ray picture is geometrical optics (or a phase decomposition for the exact
+rectangle), *not* a complete solver for finite-wavelength boundary effects.
+A free-edge elastic plate has fourth-order bending dynamics and can involve
+additional boundary phenomena. The dispersion changes frequency and speed:
+for an isotropic thin bending plate, `omega = sqrt(D/(rho*h))*|k|^2`, so
+group velocity remains parallel to `k` but depends on its magnitude.
+
+Translation-surface moduli and Mirzakhani's work enter through the rational
+polygon billiard side; they do not directly calculate the sand patterns.
 
 ## Exact first model: simply supported rectangular plate
 
@@ -70,10 +104,12 @@ wave field. Keep geometry truth independent of rough/hand-drawn rendering.
 
 ## Extension path
 
-1. Link the draggable-wall rectangle of `billiard` to this mode kernel. Show the
-   reflected ray, faint unfolded copies, mode index, nodal plot, and eigenvalue
-   side by side; recalculate both when width changes. Retain a native C math core
-   and a replaceable raylib/Android presentation layer.
+1. Link the draggable-wall rectangle of `billiard` to this mode kernel. Show a
+   **propagating wavefront orthogonal to its reflected billiard rays**, the four
+   traveling-wave directions behind each standing mode, faint unfolded copies,
+   the interference nodal plot, and the eigenvalue. Recalculate both when width
+   changes. Retain a native C math core and a replaceable raylib/Android
+   presentation layer.
 2. Compare rectangular closed-orbit lengths with the mode spectrum. State the
    boundary model and distinguish exact formulas from semiclassical heuristics.
 3. Add polygon domains and a numerical Laplace-eigenmode method for membranes or
