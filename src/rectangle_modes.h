@@ -25,7 +25,7 @@ int rectangle_mode_is_valid(RectangleMode mode);
 /* k^2 in inverse-length squared units. Invalid inputs return NAN. */
 double rectangle_wave_number_squared(RectangleMode mode);
 
-/* Normalized eigenfunction. Out-of-domain and invalid inputs return NAN. */
+/* Peak-amplitude-one eigenfunction (not L2-normalized). Invalid -> NAN. */
 double rectangle_mode_value(RectangleMode mode, double x, double y);
 
 /* sqrt(D/(rho*h)) * k^2, with bending_scale = sqrt(D/(rho*h)) > 0.
