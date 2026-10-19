@@ -4,13 +4,12 @@ ICK_CC ?=
 ICK_SOURCE_DIR ?=
 ICK_LINK_FLAGS ?= -fno-link-libatomic
 ICK_CFLAGS = -O2 -std=c11 -Wall -Wextra -Werror -pedantic -ffp-contract=off -fno-fast-math
-BILLIARD_SHA = b2aaed84cb24bf3d3510c6ed5e4b3baa09f3b02a
 
 .PHONY: check-ick test receipt clean
-check-ick:
-	@test -n "$(BILLIARD_SOURCE_DIR)" || { echo 'BLOCKED: pinned BILLIARD_SOURCE_DIR required' >&2; exit 3; }
-	@test "$$(git -C "$(BILLIARD_SOURCE_DIR)" rev-parse HEAD)" = "$(BILLIARD_SHA)" || { echo 'BLOCKED: Billiard source revision mismatch' >&2; exit 3; }
-	@test -z "$$(git -C "$(BILLIARD_SOURCE_DIR)" status --porcelain --untracked-files=no)" || { echo 'BLOCKED: dirty Billiard source' >&2; exit 3; }
+check-ick: | build
+	git -C "$(BILLIARD_SOURCE_DIR)" rev-parse HEAD > build/billiard-source.txt
+	cmp ci/billiard-source.txt build/billiard-source.txt
+	git -C "$(BILLIARD_SOURCE_DIR)" diff --exit-code HEAD --
 	$(MAKE) -C "$(BILLIARD_SOURCE_DIR)" check-ick ICK_CC="$(ICK_CC)" ICK_SOURCE_DIR="$(ICK_SOURCE_DIR)"
 
 build:
