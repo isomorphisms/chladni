@@ -24,8 +24,9 @@ double rectangle_wave_number_squared(RectangleMode mode)
         pi_value() * (double)mode.horizontal_index / mode.width;
     const double vertical_wave_number =
         pi_value() * (double)mode.vertical_index / mode.height;
-    return horizontal_wave_number * horizontal_wave_number +
-           vertical_wave_number * vertical_wave_number;
+    const double squared = horizontal_wave_number * horizontal_wave_number +
+                           vertical_wave_number * vertical_wave_number;
+    return isfinite(squared) && squared > 0.0 ? squared : NAN;
 }
 
 double rectangle_mode_value(RectangleMode mode, double x, double y)
@@ -34,8 +35,10 @@ double rectangle_mode_value(RectangleMode mode, double x, double y)
         x < 0.0 || x > mode.width || y < 0.0 || y > mode.height) {
         return NAN;
     }
-    return sin(pi_value() * (double)mode.horizontal_index * x / mode.width) *
-           sin(pi_value() * (double)mode.vertical_index * y / mode.height);
+    /* Divide coordinates first: a large finite rectangle must not overflow
+     * merely while forming a dimensionless phase. */
+    return sin(pi_value() * (double)mode.horizontal_index * (x / mode.width)) *
+           sin(pi_value() * (double)mode.vertical_index * (y / mode.height));
 }
 
 double rectangle_plate_angular_frequency(RectangleMode mode,
@@ -44,7 +47,8 @@ double rectangle_plate_angular_frequency(RectangleMode mode,
     if (!isfinite(bending_scale) || bending_scale <= 0.0) {
         return NAN;
     }
-    return bending_scale * rectangle_wave_number_squared(mode);
+    const double frequency = bending_scale * rectangle_wave_number_squared(mode);
+    return isfinite(frequency) && frequency > 0.0 ? frequency : NAN;
 }
 
 int rectangle_swapped_mode_is_degenerate(RectangleMode mode)

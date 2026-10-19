@@ -82,14 +82,14 @@ an unequal-eigenvalue pair rather than calling it a normal mode.
 
 ## Portable numerical kernel (C99)
 
-Host build and run without graphical dependencies:
-
-```sh
-cc -std=c99 -O2 src/rectangle_modes.c src/main.c -lm -o chladni
-./chladni 1 1 1 2 480 480 antisymmetric > diagonal.pgm
-./chladni 2 1 3 2 640 320 > rectangle.pgm
-sh tests/run.sh
-```
+Host compilation uses only the pinned ICK producer, including tests and CLI.
+The `Shared rectangle kernels through pinned ICK` workflow resolves the exact
+compiler/source and Billiard checkouts, then runs `make test receipt`.
+For a local qualified build, those same stage-resolved absolute locations
+must be supplied as `ICK_CC`, `ICK_SOURCE_DIR`, and `BILLIARD_SOURCE_DIR`.
+Missing or stock compiler paths fail before compilation. The old shell runner
+and its default `cc` route have been removed; the PGM smoke tests now live in
+`tests/cli_test.c` and execute the ICK-built CLI.
 
 The first six arguments are `width height m n image_columns image_rows`.
 Optional seventh argument: `single`, `symmetric`, or `antisymmetric`.
@@ -97,6 +97,11 @@ Output is a binary PGM image on stdout (white near the field's zero set), with
 `k^2` printed to stderr. This visualizes mode nodal proximity, **not sand
 motion**. The pure mode functions live in `src/rectangle_modes.[ch]` and can be
 called by a future raylib or Android renderer without adopting the CLI.
+
+The versioned [shared rectangle adapter](docs/rectangle-contract-v1.md) now
+calls both existing kernels from one request. It restarts the ray on every
+evaluation, labels boundary conditions, exposes signed plane-wave components,
+and rejects stale output and unsupported free-edge requests.
 
 All spatial coordinates match `billiard`: top-left origin, x right, y down.
 Resizing the billiard rectangle must change the eigenvalues and recompute the
