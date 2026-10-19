@@ -1,0 +1,69 @@
+name: Shared rectangle kernels through pinned ICK
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  rectangle-ick:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout exact Chladni head
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Checkout the existing rectangle ray producer
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: isomorphisms/billiard
+          ref: b2aaed84cb24bf3d3510c6ed5e4b3baa09f3b02a
+          path: _billiard
+          persist-credentials: false
+      - name: Build and independently qualify owned ICK
+        uses: isomorphisms/ai-ci/ick-host@4ea071a96239f3a29ca6d98454feb59947d87cfe
+        id: ick
+      - name: Run both existing kernels and the shared contract acceptance
+        env:
+          ICK_CC: ${{ steps.ick.outputs.compiler }}
+          ICK_SOURCE_DIR: ${{ github.workspace }}/.ick-host-source
+          BILLIARD_SOURCE_DIR: ${{ github.workspace }}/_billiard
+        run: make test
+      - name: Missing compiler must fail before compilation
+        id: missing
+        continue-on-error: true
+        env:
+          BILLIARD_SOURCE_DIR: ${{ github.workspace }}/_billiard
+        run: make check-ick > build/missing-compiler.log 2>&1
+      - name: Stock compiler must fail before compilation
+        id: stock
+        continue-on-error: true
+        env:
+          ICK_CC: /usr/bin/cc
+          ICK_SOURCE_DIR: ${{ github.workspace }}/.ick-host-source
+          BILLIARD_SOURCE_DIR: ${{ github.workspace }}/_billiard
+        run: make check-ick > build/stock-compiler.log 2>&1
+      - name: Reject false success in compiler negative controls
+        if: steps.missing.outcome != 'failure' || steps.stock.outcome != 'failure'
+        run: exit 1
+      - name: Verify missing-compiler rejection reason
+        run: >-
+          grep -Fq 'BLOCKED: pinned ICK_CC and ICK_SOURCE_DIR required' build/missing-compiler.log
+      - name: Verify stock-compiler rejection reason
+        run: >-
+          grep -Fq 'BLOCKED: compiler must be source-qualified ICK stage' build/stock-compiler.log
+      - name: Bind all successful and rejected controls to exact source and compiler
+        env:
+          ICK_CC: ${{ steps.ick.outputs.compiler }}
+          ICK_SOURCE_DIR: ${{ github.workspace }}/.ick-host-source
+          BILLIARD_SOURCE_DIR: ${{ github.workspace }}/_billiard
+        run: make receipt
+      - name: Retain exact-head source, executable and test evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: rectangle-ick-${{ github.event.pull_request.head.sha || github.sha }}-${{ github.run_attempt }}
+          path: build/
+          if-no-files-found: warn

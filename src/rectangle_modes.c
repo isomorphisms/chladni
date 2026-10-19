@@ -1,0 +1,89 @@
+#include "rectangle_modes.h"
+
+#include <math.h>
+
+static double pi_value(void)
+{
+    return acos(-1.0);
+}
+
+int rectangle_mode_is_valid(RectangleMode mode)
+{
+    return isfinite(mode.width) && isfinite(mode.height) &&
+           mode.width > 0.0 && mode.height > 0.0 &&
+           mode.horizontal_index > 0 && mode.vertical_index > 0;
+}
+
+double rectangle_wave_number_squared(RectangleMode mode)
+{
+    if (!rectangle_mode_is_valid(mode)) {
+        return NAN;
+    }
+    const double horizontal_wave_number =
+        pi_value() * (double)mode.horizontal_index / mode.width;
+    const double vertical_wave_number =
+        pi_value() * (double)mode.vertical_index / mode.height;
+    const double squared = horizontal_wave_number * horizontal_wave_number +
+                           vertical_wave_number * vertical_wave_number;
+    return isfinite(squared) && squared > 0.0 ? squared : NAN;
+}
+
+double rectangle_mode_value(RectangleMode mode, double x, double y)
+{
+    if (!rectangle_mode_is_valid(mode) || !isfinite(x) || !isfinite(y) ||
+        x < 0.0 || x > mode.width || y < 0.0 || y > mode.height) {
+        return NAN;
+    }
+    /* Divide coordinates first: a large finite rectangle must not overflow
+     * merely while forming a dimensionless phase. */
+    return sin(pi_value() * (double)mode.horizontal_index * (x / mode.width)) *
+           sin(pi_value() * (double)mode.vertical_index * (y / mode.height));
+}
+
+double rectangle_plate_angular_frequency(RectangleMode mode,
+                                        double bending_scale)
+{
+    if (!isfinite(bending_scale) || bending_scale <= 0.0) {
+        return NAN;
+    }
+    const double frequency = bending_scale * rectangle_wave_number_squared(mode);
+    return isfinite(frequency) && frequency > 0.0 ? frequency : NAN;
+}
+
+int rectangle_swapped_mode_is_degenerate(RectangleMode mode)
+{
+    if (!rectangle_mode_is_valid(mode)) {
+        return 0;
+    }
+    /* For swapped indices the eigenvalue difference factors as
+     * pi^2 * (m^2 - n^2) * (1/width^2 - 1/height^2).
+     * Thus distinct swapped modes are degenerate exactly on a square.
+     * A floating tolerance would incorrectly admit a nearly square plate.
+     */
+    return isfinite(rectangle_wave_number_squared(mode)) &&
+        (mode.horizontal_index == mode.vertical_index || mode.width == mode.height);
+}
+
+double rectangle_combined_mode_value(RectangleMode mode,
+                                     RectangleModeCombination combination,
+                                     double x, double y)
+{
+    const double first = rectangle_mode_value(mode, x, y);
+    if (combination == RECTANGLE_SINGLE_MODE || !isfinite(first)) {
+        return first;
+    }
+    if (combination != RECTANGLE_SYMMETRIC_PAIR &&
+        combination != RECTANGLE_ANTISYMMETRIC_PAIR) {
+        return NAN;
+    }
+    if (mode.horizontal_index == mode.vertical_index ||
+        !rectangle_swapped_mode_is_degenerate(mode)) {
+        return NAN;
+    }
+    RectangleMode exchanged = mode;
+    exchanged.horizontal_index = mode.vertical_index;
+    exchanged.vertical_index = mode.horizontal_index;
+    const double second = rectangle_mode_value(exchanged, x, y);
+    const double sign = (combination == RECTANGLE_SYMMETRIC_PAIR) ? 1.0 : -1.0;
+    return (first + sign * second) / sqrt(2.0);
+}
