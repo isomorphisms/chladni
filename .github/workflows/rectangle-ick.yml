@@ -2,7 +2,7 @@ name: Shared rectangle kernels through pinned ICK
 on:
   pull_request:
   push:
-    branches: [main, sun/chl-reuse-01]
+    branches: [main]
 permissions:
   contents: read
 jobs:
@@ -49,9 +49,11 @@ jobs:
         if: steps.missing.outcome != 'failure' || steps.stock.outcome != 'failure'
         run: exit 1
       - name: Verify missing-compiler rejection reason
-        run: grep -Fq 'BLOCKED: pinned ICK_CC and ICK_SOURCE_DIR required' build/missing-compiler.log
+        run: >-
+          grep -Fq 'BLOCKED: pinned ICK_CC and ICK_SOURCE_DIR required' build/missing-compiler.log
       - name: Verify stock-compiler rejection reason
-        run: grep -Fq 'BLOCKED: compiler must be source-qualified ICK stage' build/stock-compiler.log
+        run: >-
+          grep -Fq 'BLOCKED: compiler must be source-qualified ICK stage' build/stock-compiler.log
       - name: Retain exact-head source, executable and test evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
