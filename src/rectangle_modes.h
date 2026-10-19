@@ -36,7 +36,8 @@ double rectangle_plate_angular_frequency(RectangleMode mode,
 
 /* A paired mode exchanges the two positive indices; for a square this is
  * exactly degenerate, while a non-square generally is not.
- * Return 1 if the two eigenvalues coincide at floating-point precision.
+ * Return 1 only for identical indices or exactly equal stored dimensions,
+ * with a representable eigenvalue. Nearly square is not degenerate.
  */
 int rectangle_swapped_mode_is_degenerate(RectangleMode mode);
 

@@ -68,6 +68,8 @@ reflection signs, invalid requests, unsupported free edges, truncation, stale
 results, overflow and rejected compiler substitution. The phase overflow fix
 divides x by width before multiplying by π and the mode index. Wave-number
 squares and frequencies outside finite positive double range return NAN.
+Swapped distinct modes are combined only when the stored width equals height
+exactly; a near-square tolerance must not admit a nondegenerate mixture.
 
 Scope is ICK host source and behavior. No APK, emulator, device, free-edge
 solver, sand experiment, full moduli-space classification or physical claim

@@ -30,7 +30,7 @@ jobs:
           ICK_CC: ${{ steps.ick.outputs.compiler }}
           ICK_SOURCE_DIR: ${{ github.workspace }}/.ick-host-source
           BILLIARD_SOURCE_DIR: ${{ github.workspace }}/_billiard
-        run: make test receipt
+        run: make test
       - name: Missing compiler must fail before compilation
         id: missing
         continue-on-error: true
@@ -54,6 +54,12 @@ jobs:
       - name: Verify stock-compiler rejection reason
         run: >-
           grep -Fq 'BLOCKED: compiler must be source-qualified ICK stage' build/stock-compiler.log
+      - name: Bind all successful and rejected controls to exact source and compiler
+        env:
+          ICK_CC: ${{ steps.ick.outputs.compiler }}
+          ICK_SOURCE_DIR: ${{ github.workspace }}/.ick-host-source
+          BILLIARD_SOURCE_DIR: ${{ github.workspace }}/_billiard
+        run: make receipt
       - name: Retain exact-head source, executable and test evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

@@ -87,6 +87,8 @@ int main(void)
     near(result.angular_frequency, 3.75 * pi * pi, "resized plate frequency");
     near(result.sampled_amplitude, sqrt(0.5), "resized nodal sample");
     printf("rectangle\twidth\theight\tk_squared\tomega\n");
+    printf("shared\t1\t1\t%.15g\t%.15g\n", old.wave_number_squared,
+           old.angular_frequency);
     printf("shared\t2\t1\t%.15g\t%.15g\n", result.wave_number_squared,
            result.angular_frequency);
     reconstruct(&result, 0.5, 0.5, sqrt(0.5));
@@ -105,18 +107,22 @@ int main(void)
         const double magnitude = sqrt(result.wave_number_squared);
         billiard_table table = {2.0, 1.0, 0.61, 0.37,
             atan2(-wave.vertical_wave_number, wave.horizontal_wave_number) * 180.0 / pi};
-        billiard_ray ray;
-        billiard_segment first;
-        check(billiard_begin(&table, &ray) == 0, "component ray begins");
-        near(ray.dx, wave.horizontal_wave_number / magnitude, "wave normal x");
-        near(ray.dy, wave.vertical_wave_number / magnitude, "wave normal y");
-        const double before_x = ray.dx, before_y = ray.dy;
-        check(billiard_next(&table, &ray, &first) == 0, "component reflects");
-        check(first.hit != BILLIARD_CORNER, "independent point avoids corners");
-        near(ray.dx, first.hit == BILLIARD_VERTICAL_WALL ? -before_x : before_x,
-             "normal x reflection");
-        near(ray.dy, first.hit == BILLIARD_HORIZONTAL_WALL ? -before_y : before_y,
-             "normal y reflection");
+        for (int wall = 1; wall <= 2; ++wall) {
+            table.start_x = wall == 1
+                ? (wave.horizontal_wave_number > 0.0 ? 1.95 : 0.05) : 1.0;
+            table.start_y = wall == 2
+                ? (wave.vertical_wave_number > 0.0 ? 0.95 : 0.05) : 0.5;
+            billiard_ray ray;
+            billiard_segment first;
+            check(billiard_begin(&table, &ray) == 0, "component ray begins");
+            near(ray.dx, wave.horizontal_wave_number / magnitude, "wave normal x");
+            near(ray.dy, wave.vertical_wave_number / magnitude, "wave normal y");
+            const double before_x = ray.dx, before_y = ray.dy;
+            check(billiard_next(&table, &ray, &first) == 0, "component reflects");
+            check((int)first.hit == wall, "test exercises the requested wall");
+            near(ray.dx, wall == 1 ? -before_x : before_x, "normal x reflection");
+            near(ray.dy, wall == 2 ? -before_y : before_y, "normal y reflection");
+        }
     }
     request.launch_degrees = 45.0;
     check(chladni_rectangle_run(&request, segments, 32, &result) == CHL_RECTANGLE_OK,
@@ -188,6 +194,9 @@ int main(void)
     request = fixture(); request.width = 2.0; request.vertical_index = 2;
     request.combination = RECTANGLE_SYMMETRIC_PAIR;
     rejected(request, CHL_RECTANGLE_INVALID, "nondegenerate mixture");
+    request = fixture(); request.width = nextafter(1.0, 2.0);
+    request.vertical_index = 2; request.combination = RECTANGLE_SYMMETRIC_PAIR;
+    rejected(request, CHL_RECTANGLE_INVALID, "nearly square is not exactly degenerate");
     request = fixture(); request.sample_x = 1.1;
     rejected(request, CHL_RECTANGLE_INVALID, "sample outside geometry");
     request = fixture(); request.distance_budget = -1.0;

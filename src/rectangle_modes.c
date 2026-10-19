@@ -1,6 +1,5 @@
 #include "rectangle_modes.h"
 
-#include <float.h>
 #include <math.h>
 
 static double pi_value(void)
@@ -56,13 +55,13 @@ int rectangle_swapped_mode_is_degenerate(RectangleMode mode)
     if (!rectangle_mode_is_valid(mode)) {
         return 0;
     }
-    RectangleMode exchanged = mode;
-    exchanged.horizontal_index = mode.vertical_index;
-    exchanged.vertical_index = mode.horizontal_index;
-    const double first = rectangle_wave_number_squared(mode);
-    const double second = rectangle_wave_number_squared(exchanged);
-    return isfinite(first) && isfinite(second) &&
-           fabs(first - second) <= 64.0 * DBL_EPSILON * fmax(first, second);
+    /* For swapped indices the eigenvalue difference factors as
+     * pi^2 * (m^2 - n^2) * (1/width^2 - 1/height^2).
+     * Thus distinct swapped modes are degenerate exactly on a square.
+     * A floating tolerance would incorrectly admit a nearly square plate.
+     */
+    return isfinite(rectangle_wave_number_squared(mode)) &&
+        (mode.horizontal_index == mode.vertical_index || mode.width == mode.height);
 }
 
 double rectangle_combined_mode_value(RectangleMode mode,
